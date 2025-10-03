@@ -13,12 +13,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
       
-      - name: Install SnowSQL
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      
+      - name: Install Snowflake Connector
         run: |
-          sudo apt-get update
-          sudo apt-get install -y libssl-dev
-          curl -O https://sfc-repo.snowflakecomputing.com/snowsql/bootstrap/1.2/linux_x86_64/snowsql-1.2.28-linux_x86_64.bash
-          SNOWSQL_DEST=~/snowsql SNOWSQL_LOGIN_SHELL=~/.profile bash snowsql-1.2.28-linux_x86_64.bash
+          pip install snowflake-connector-python
       
       - name: Execute SQL in Snowflake
         env:
@@ -28,10 +30,27 @@ jobs:
           SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
           SNOWFLAKE_ROLE: ${{ secrets.SNOWFLAKE_ROLE }}
         run: |
-          export SNOWSQL_PWD=$SNOWFLAKE_PASSWORD
-          ~/snowsql/snowsql \
-            -a $SNOWFLAKE_ACCOUNT \
-            -u $SNOWFLAKE_USER \
-            -w $SNOWFLAKE_WAREHOUSE \
-            -r $SNOWFLAKE_ROLE \
-            -f sql/create_table.sql
+          python - <<EOF
+          import snowflake.connector
+          import os
+          
+          conn = snowflake.connector.connect(
+              account=os.environ['SNOWFLAKE_ACCOUNT'],
+              user=os.environ['SNOWFLAKE_USER'],
+              password=os.environ['SNOWFLAKE_PASSWORD'],
+              warehouse=os.environ['SNOWFLAKE_WAREHOUSE'],
+              role=os.environ['SNOWFLAKE_ROLE']
+          )
+          
+          with open('sql/create_table.sql', 'r') as f:
+              sql_script = f.read()
+          
+          cursor = conn.cursor()
+          for statement in sql_script.split(';'):
+              if statement.strip():
+                  cursor.execute(statement)
+          
+          cursor.close()
+          conn.close()
+          print("✅ SQL executed successfully!")
+          EOF
