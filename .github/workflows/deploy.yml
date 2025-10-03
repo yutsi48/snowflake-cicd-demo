@@ -26,10 +26,10 @@ jobs:
           SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
           SNOWFLAKE_ROLE: ${{ secrets.SNOWFLAKE_ROLE }}
         run: |
+          export SNOWSQL_PWD=$SNOWFLAKE_PASSWORD
           ~/snowsql/snowsql \
             -a $SNOWFLAKE_ACCOUNT \
             -u $SNOWFLAKE_USER \
             -w $SNOWFLAKE_WAREHOUSE \
             -r $SNOWFLAKE_ROLE \
-            -f sql/create_table.sql \
-            <<< $SNOWFLAKE_PASSWORD
+            -f sql/create_table.sql
