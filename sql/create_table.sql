@@ -14,5 +14,7 @@
        SECOND_NAME VARCHAR(100),
        DEPARTMENT VARCHAR(50),
        HIRE_DATE DATE,
-       SALARY NUMBER(10,2)
+       SALARY NUMBER(10,2),
+      -- ⚠️ Nueva columna problemática
+       BAD_COLUMN VARCHAR(1)  -- Muy pequeña, causará problemas
    );
